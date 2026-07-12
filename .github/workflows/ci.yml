@@ -19,11 +19,15 @@ jobs:
       - name: Checkout kode
         uses: actions/checkout@v4
 
-      # 2. Setup PHP sesuai versi di composer.json (^8.2)
+      # 2. Setup PHP
+      # Catatan: composer.json minta php ^8.2, tapi salah satu dependency
+      # (openspout, dipakai lewat Filament untuk fitur export excel) versi
+      # terbarunya butuh PHP 8.3+. Jadi kita pakai 8.3 di CI biar konsisten
+      # dengan composer.lock yang ter-commit.
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.2"
+          php-version: "8.3"
           extensions: mbstring, dom, fileinfo, mysql, sqlite3, pdo_sqlite, gd, zip
           coverage: none
 
