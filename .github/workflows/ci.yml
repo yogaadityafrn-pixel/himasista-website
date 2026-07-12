@@ -1,0 +1,73 @@
+name: CI
+
+# Kapan workflow ini jalan:
+# - setiap push ke branch main
+# - setiap ada pull request yang mengarah ke branch main
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Ambil kode dari repo
+      - name: Checkout kode
+        uses: actions/checkout@v4
+
+      # 2. Setup PHP sesuai versi di composer.json (^8.2)
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: mbstring, dom, fileinfo, mysql, sqlite3, pdo_sqlite, gd, zip
+          coverage: none
+
+      # 3. Cache dependency Composer biar CI lebih cepat di run berikutnya
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      # 4. Install dependency PHP
+      - name: Install dependencies (Composer)
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      # 5. Setup Node untuk build asset (Tailwind, Alpine, dll)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # 6. Install dependency Node & build asset frontend
+      - name: Install dependencies (npm) & build asset
+        run: |
+          npm ci
+          npm run build
+
+      # 7. Siapkan file .env untuk environment testing
+      - name: Siapkan file .env
+        run: cp .env.example .env
+
+      # 8. Generate APP_KEY
+      - name: Generate application key
+        run: php artisan key:generate
+
+      # 9. Buat storage symlink (biar konsisten dengan environment production nantinya)
+      - name: Buat storage link
+        run: php artisan storage:link
+
+      # 10. Jalankan migration ke database SQLite in-memory (sesuai phpunit.xml)
+      - name: Jalankan migration
+        run: php artisan migrate --force
+
+      # 11. Jalankan test (Pest)
+      - name: Jalankan test
+        run: php artisan test
