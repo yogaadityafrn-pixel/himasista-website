@@ -47,14 +47,14 @@ class SettingResource extends Resource
                     ->label('Isi (Value)')
                     ->rows(8)
                     ->columnSpanFull()
-                    // Tampilkan Textarea jika key='visi'
-                    ->visible(fn ($record) => $record?->key === 'visi'),
+                    // Tampilkan Textarea jika key='visi' (tidak peduli besar/kecil huruf)
+                    ->visible(fn ($record) => strtolower($record?->key ?? '') === 'visi'),
 
                 Forms\Components\RichEditor::make('value')
                     ->label('Isi (Value)')
                     ->columnSpanFull()
-                    // Tampilkan RichEditor jika key='misi'
-                    ->visible(fn ($record) => $record?->key === 'misi'),
+                    // Tampilkan RichEditor jika key='misi' (tidak peduli besar/kecil huruf)
+                    ->visible(fn ($record) => strtolower($record?->key ?? '') === 'misi'),
                 
                 Forms\Components\TextInput::make('value')
                         ->label('Nomor WA Humas 1')
@@ -62,7 +62,7 @@ class SettingResource extends Resource
                         ->prefix('+62') // Beri awalan +62
                         ->helperText('Masukkan nomor WA tanpa 0 di depan. Contoh: 81910833878')
                         ->columnSpanFull()
-                        ->visible(fn ($record) => $record?->key === 'wa_humas_1'),
+                        ->visible(fn ($record) => strtolower($record?->key ?? '') === 'wa_humas_1'),
 
                 Forms\Components\TextInput::make('value')
                     ->label('Nomor WA Humas 2')
@@ -70,7 +70,15 @@ class SettingResource extends Resource
                     ->prefix('+62')
                     ->helperText('Masukkan nomor WA tanpa 0 di depan. Contoh: 81910833878')
                     ->columnSpanFull()
-                    ->visible(fn ($record) => $record?->key === 'wa_humas_2'),
+                    ->visible(fn ($record) => strtolower($record?->key ?? '') === 'wa_humas_2'),
+
+                // Fallback: kalau ada key lain di luar 4 di atas, tetap tampil sebagai textarea biasa
+                // biar gak pernah ada form yang kosong blank kayak kejadian sebelumnya.
+                Forms\Components\Textarea::make('value')
+                    ->label('Isi (Value)')
+                    ->rows(6)
+                    ->columnSpanFull()
+                    ->visible(fn ($record) => !in_array(strtolower($record?->key ?? ''), ['visi', 'misi', 'wa_humas_1', 'wa_humas_2'])),
             ]);
     }
 

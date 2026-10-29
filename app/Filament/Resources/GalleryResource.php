@@ -36,8 +36,12 @@ class GalleryResource extends Resource
                 ->label('Foto')
                 ->image()
                 ->directory('gallery-images')
+                ->imageResizeMode('cover')
+                ->imageResizeTargetWidth('1600')
+                ->imageResizeTargetHeight('1600')
+                ->imageEditor()
                 ->required()
-                ->helperText('Rekomendasi: Unggah foto dengan orientasi potret (vertikal) untuk hasil terbaik di layout galeri.')
+                ->helperText('Rekomendasi: Unggah foto dengan orientasi potret (vertikal) untuk hasil terbaik di layout galeri. Foto akan otomatis dikompres/diresize saat upload.')
                 ->columnSpanFull(),
 
                 Forms\Components\TextInput::make('caption')

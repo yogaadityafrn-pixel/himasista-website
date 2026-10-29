@@ -22,11 +22,18 @@ class PublicController extends Controller
      */
     public function home(): View
     {
-        $settings = Setting::whereIn('key', ['visi', 'misi', 'wa_humas_1', 'wa_humas_2'])
-                        ->pluck('value', 'key');
+        // Ambil settings tanpa peduli besar/kecil huruf pada key,
+        // lalu normalisasi key hasilnya jadi lowercase biar konsisten
+        // dipakai di view (mis. $settings['visi'], $settings['misi']).
+        $settings = Setting::get()
+                        ->filter(fn ($item) => in_array(strtolower($item->key), ['visi', 'misi', 'wa_humas_1', 'wa_humas_2']))
+                        ->mapWithKeys(fn ($item) => [strtolower($item->key) => $item->value]);
 
         // 1. Ambil Periode Aktif
         $activePeriod = Period::where('is_active', true)->first();
+
+        // 1b. Ambil SEMUA periode buat isi dropdown pemilih periode
+        $allPeriods = Period::orderBy('start_date', 'desc')->get();
 
         // 2. Ambil 6 Berita Terbaru
         $latestPosts = Post::where('status', 'published')
@@ -42,9 +49,14 @@ class PublicController extends Controller
                                 ->get();
         // === AKHIR PERBAIKAN #1 ===
 
-        // 4. Ambil 9 Foto Galeri Terbaru
+        // 4. Ambil 9 Foto Galeri Terbaru (buat section Galeri di homepage)
         $galleries = Gallery::orderBy('created_at', 'desc')
                             ->take(9)
+                            ->get();
+
+        // 4b. Ambil 24 Foto Galeri (khusus buat kolase background Visi Misi)
+        $collageGalleries = Gallery::orderBy('created_at', 'desc')
+                            ->take(24)
                             ->get();
 
         // 5. Variabel kosong untuk data periode
@@ -71,10 +83,36 @@ class PublicController extends Controller
             'posts' => $latestPosts,
             'events' => $upcomingEvents, // <-- PERBAIKAN #2 (TAMBAHKAN 'events')
             'galleries' => $galleries,
+            'collageGalleries' => $collageGalleries,
             'period' => $activePeriod,
+            'allPeriods' => $allPeriods,
             'managementsByDivision' => $managementsByDivision,
             'programsByDivision' => $programsByDivision,
             'settings' => $settings,
+        ]);
+    }
+
+    /**
+     * Endpoint JSON: ambil data struktur pengurus & proker
+     * berdasarkan periode tertentu, dipanggil dari dropdown (AJAX).
+     */
+    public function getStrukturByPeriod(Period $period)
+    {
+        $managementsByDivision = $period->managements()
+                                    ->orderBy('id', 'asc')
+                                    ->get()
+                                    ->groupBy('division');
+
+        $programsByDivision = $period->programs()
+                                    ->orderBy('division')
+                                    ->orderBy('name')
+                                    ->get()
+                                    ->groupBy('division');
+
+        return response()->json([
+            'period_name' => $period->name,
+            'managements' => view('pages.partials._struktur-pengurus-content', compact('managementsByDivision'))->render(),
+            'programs' => view('pages.partials._program-kerja-content', compact('programsByDivision'))->render(),
         ]);
     }
     
@@ -147,6 +185,19 @@ class PublicController extends Controller
 
         return view('pages.arsip-acara', [
             'events' => $events,
+        ]);
+    }
+
+    /**
+     * Tampilkan halaman arsip Galeri (semua foto, dengan paginasi).
+     */
+    public function arsipGaleri(): View
+    {
+        $galleries = Gallery::orderBy('created_at', 'desc')
+                        ->paginate(15); // 15 foto per halaman
+
+        return view('pages.arsip-galeri', [
+            'galleries' => $galleries,
         ]);
     }
 }

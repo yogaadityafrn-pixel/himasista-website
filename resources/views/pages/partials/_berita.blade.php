@@ -3,19 +3,19 @@
 <!-- ======================================= -->
 <section id="berita" class="bg-gray-50 py-24">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8"
-         x-data="{ isVisible: false }" x-intersect.once="isVisible = true">
+         x-data="{ isVisible: false }" x-intersect:enter.margin.-10%="isVisible = true" x-intersect:leave.margin.-10%="isVisible = false">
         
-        <h2 class="text-5xl font-bold text-center tracking-tighter mb-16">Berita Terbaru</h2>
+        <h2 class="text-5xl font-bold text-center tracking-tighter mb-16 reveal-up">Berita Terbaru</h2>
         
         @if($posts->count() > 0)
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                 @foreach($posts as $post)
-                    <div x-show="isVisible"
-                         x-transition:enter="transition ease-out duration-700"
-                         x-transition:enter-start="opacity-0 translate-y-6"
-                         x-transition:enter-end="opacity-100 translate-y-0"
-                         style="transition-delay: {{ $loop->index * 150 }}ms"
-                         class="flex flex-col bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 transform hover:-translate-y-1 transition-all duration-300">
+                    @php
+                        $col = ($loop->iteration - 1) % 3;
+                        $revealClass = $col === 0 ? 'reveal-left' : ($col === 2 ? 'reveal-right' : 'reveal-up');
+                        $delayClass  = 'reveal-delay-' . (($loop->index % 3) + 1);
+                    @endphp
+                    <div class="flex flex-col bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 transform hover:-translate-y-1 transition-all duration-300 {{ $revealClass }} {{ $delayClass }}">
                         
                         <img loading="lazy" src="{{ Storage::url($post->image) }}" alt="{{ $post->title }}" class="w-full h-48 object-cover">
                         
@@ -35,8 +35,7 @@
                 @endforeach
             </div>
 
-            <!-- Tombol Lihat Semua -->
-            <div class="text-center mt-12">
+            <div class="text-center mt-12 reveal-up reveal-delay-2">
                 <a href="{{ route('berita.index') }}" 
                    class="px-6 py-3 text-base font-medium text-white bg-primary rounded-lg shadow-lg hover:bg-opacity-90 transform hover:-translate-y-0.5 transition-all">
                     Lihat Semua Berita &rarr;

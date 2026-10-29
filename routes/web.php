@@ -7,10 +7,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [PublicController::class, 'home'])->name('home');
 Route::get('/berita/{slug}', [PublicController::class, 'showPost'])->name('berita.show');
 Route::get('/acara/{slug}', [PublicController::class, 'showEvent'])->name('acara.show');
+Route::get('/api/struktur/{period}', [PublicController::class, 'getStrukturByPeriod'])->name('struktur.byPeriod');
 Route::post('/kontak-store', [PublicController::class, 'storeKontak'])->name('kontak.store');
 
 Route::get('/berita', [PublicController::class, 'arsipBerita'])->name('berita.index');
 Route::get('/acara', [PublicController::class, 'arsipAcara'])->name('acara.index');
+Route::get('/galeri', [PublicController::class, 'arsipGaleri'])->name('galeri.index');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
